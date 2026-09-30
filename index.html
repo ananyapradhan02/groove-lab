@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>groove lab</title>
+  <meta name="description" content="A step sequencer, metronome and tempo ladder for drummers. Every sound is synthesised in the browser. Share a groove as a link.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="app.css">
+  <script>
+    try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <a class="wordmark" href="./">groove <em>lab</em></a>
+      <nav>
+        <a href="https://github.com/ananyapradhan02/groove-lab" target="_blank" rel="noopener">source</a>
+        <button class="pill theme-toggle" id="theme" type="button" aria-label="toggle theme">theme</button>
+      </nav>
+    </header>
+
+    <section class="section enter">
+      <h1>ten minutes <em>on the kit</em></h1>
+      <p class="dek">build a groove, play along, and let the tempo climb a few beats every few bars. every sound is made in your browser. nothing starts until you press play.</p>
+    </section>
+
+    <section class="section" id="lab">
+      <div class="transport box">
+        <button class="pill primary play" id="play" type="button" aria-pressed="false">play</button>
+        <div class="readout">
+          <span class="bpm mono" id="bpmNow" aria-live="off">100</span>
+          <span class="caption">bpm</span>
+        </div>
+        <div class="readout">
+          <span class="mono barnum" id="barNow">0</span>
+          <span class="caption">bars</span>
+        </div>
+        <div class="row modes" role="group" aria-label="mode">
+          <button class="pill" type="button" data-mode="groove" aria-pressed="true">grooves</button>
+          <button class="pill" type="button" data-mode="metro" aria-pressed="false">metronome</button>
+        </div>
+      </div>
+      <p class="caption keys">space plays and stops. in the grid, arrows move and enter toggles a step.</p>
+
+      <div class="layout">
+        <div class="controls">
+          <fieldset>
+            <legend>tempo</legend>
+            <label for="tempo">beats per minute, 40 to 240</label>
+            <div class="pair">
+              <input type="range" id="tempoRange" min="40" max="240" step="1" value="100" aria-label="tempo slider">
+              <input type="number" id="tempo" min="40" max="240" step="1" value="100" inputmode="numeric">
+            </div>
+          </fieldset>
+
+          <fieldset id="swingSet">
+            <legend>swing</legend>
+            <label for="swing">push the off sixteenths late. fifty is a triplet feel.</label>
+            <div class="pair">
+              <input type="range" id="swing" min="0" max="60" step="1" value="0">
+              <output class="mono" id="swingOut" for="swing">0%</output>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>tempo ladder</legend>
+            <label class="check"><input type="checkbox" id="ladderOn"> climb while i play</label>
+            <div class="ladder">
+              <div><label for="ladStart">start</label><input type="number" id="ladStart" min="40" max="240" value="80" inputmode="numeric"></div>
+              <div><label for="ladStep">add bpm</label><input type="number" id="ladStep" min="1" max="40" value="4" inputmode="numeric"></div>
+              <div><label for="ladEvery">every n bars</label><input type="number" id="ladEvery" min="1" max="32" value="4" inputmode="numeric"></div>
+              <div><label for="ladCeil">ceiling</label><input type="number" id="ladCeil" min="40" max="240" value="120" inputmode="numeric"></div>
+            </div>
+            <p class="caption" id="ladderNote">off. the tempo stays where you set it.</p>
+          </fieldset>
+        </div>
+
+        <div class="stage">
+          <div class="panel" id="groovePanel">
+            <div class="panel-title"><span>grooves</span><span class="meta">16 steps · 4/4</span></div>
+            <div class="panel-body">
+              <p class="label">start from a groove</p>
+              <div class="row presets" id="presets"></div>
+              <div class="grid-wrap">
+                <div class="seq" id="seq" role="group" aria-label="step sequencer, six drums by sixteen steps"></div>
+              </div>
+              <div class="row actions">
+                <button class="pill" type="button" id="copy">copy link to this groove</button>
+                <button class="pill danger" type="button" id="clear">clear</button>
+                <span class="caption" id="copyStatus" role="status"></span>
+              </div>
+              <input type="text" class="linkbox" id="linkbox" readonly hidden aria-label="link to this groove">
+              <p class="caption">tap a drum name to hear it on its own.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="metroPanel" hidden>
+            <div class="panel-title"><span>metronome</span><span class="meta" id="metroMeta">4/4 · quarter</span></div>
+            <div class="panel-body">
+              <p class="label">time</p>
+              <div class="row" role="group" aria-label="time signature" id="sigs"></div>
+              <p class="label spaced">subdivision</p>
+              <div class="row" role="group" aria-label="subdivision" id="subs"></div>
+              <label class="check spaced"><input type="checkbox" id="accentOne" checked> accent beat one</label>
+              <p class="caption" id="sigNote">the beat is the quarter note.</p>
+              <div class="beats" id="beats" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <p class="label">how to use ten minutes</p>
+      <div class="prose">
+        <p>pick a groove, set the ladder to start ten beats under where it feels easy, and let it climb four beats every four bars. when it gets messy, stop, drop back, and go again. the next day, start two beats higher.</p>
+        <p>teachers can build a groove, copy the link, and send it to a student. the link carries the pattern, the tempo and the swing, and nothing else.</p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <ol class="sitemap">
+        <li><a href="./">groove lab</a></li>
+        <li><a href="README.md">readme</a></li>
+        <li><a href="ROADMAP.md">roadmap</a></li>
+        <li><a href="CHANGELOG.md">changelog</a></li>
+        <li><a href="https://github.com/ananyapradhan02" target="_blank" rel="noopener">other builds</a></li>
+        <li><a href="https://calendly.com/ananyapradhan/30min" target="_blank" rel="noopener">book a 30-minute call</a></li>
+        <li><a href="mailto:ananyapradhan02@gmail.com">write to ananya</a></li>
+      </ol>
+      <p class="colophon">v0.1 · 30.09.26 · set in newsreader, figtree and ibm plex mono. sounds synthesised, no samples. no analytics. © ananya pradhan</p>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
